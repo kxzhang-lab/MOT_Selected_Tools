@@ -37,9 +37,11 @@ class VideoLLAMA3Preprocessor:
         # 创建输出子目录
         self.video_dir = self.output_dir / "video"
         self.json_dir = self.output_dir / "json"
+        self.image_dir = self.output_dir / "images"
         
         self.video_dir.mkdir(parents=True, exist_ok=True)
         self.json_dir.mkdir(parents=True, exist_ok=True)
+        self.image_dir.mkdir(parents=True, exist_ok=True)
         
         # 获取图像文件列表
         self.image_files = self._get_image_files()
@@ -159,7 +161,7 @@ class VideoLLAMA3Preprocessor:
         return bbox_dict
     
     def create_side_by_side_frame(self, frame_id: int, bbox: Optional[List[int]], 
-                                   original_frame: np.ndarray) -> np.ndarray:
+                                   original_frame: np.ndarray, key_frames: Optional[List[int]]=None) -> np.ndarray:
         """
         创建左右拼接帧（原图+放大效果图）
         
@@ -187,7 +189,7 @@ class VideoLLAMA3Preprocessor:
         # 添加帧号
         cv2.putText(left_frame, f"Frame: {frame_id}", (10, 30),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
-        
+
         # 右侧：放大效果图
         right_frame = np.zeros((h, w, 3), dtype=np.uint8)
         
@@ -233,10 +235,16 @@ class VideoLLAMA3Preprocessor:
         # 添加分隔线
         separator = np.ones((h, 5, 3), dtype=np.uint8) * 255
         side_by_side = np.hstack([left_frame, separator, right_frame])
+
+        # 把关键帧的bbox可视化原图和拼接了的放大效果图单独保存
+        if frame_id in key_frames:
+            cv2.imwrite(str(self.image_dir / f"frame_{(frame_id-1):06d}.jpg"), left_frame)
+            cv2.imwrite(str(self.image_dir / f"frame_wz_{(frame_id-1):06d}.jpg"),side_by_side)
         
         return side_by_side
     
-    def generate_visualization_video(self, start_frame: int, end_frame: int,
+    def generate_visualization_video(self, start_frame: int, end_frame: int, 
+                                      key_frames: Optional[list[int]] = None,
                                       output_name: str = "visualization.mp4",
                                       fps: int = 30, sample_interval: int = 1) -> str:
         """
@@ -245,6 +253,7 @@ class VideoLLAMA3Preprocessor:
         Args:
             start_frame: 起始帧（标注帧号）
             end_frame: 结束帧（标注帧号）
+            key_frames: 关键帧（标注帧号）
             output_name: 输出视频文件名
             fps: 视频帧率
             sample_interval: 采样间隔
@@ -300,7 +309,7 @@ class VideoLLAMA3Preprocessor:
                         break
             
             # 创建拼接帧
-            side_by_side = self.create_side_by_side_frame(frame_id, bbox, frame)
+            side_by_side = self.create_side_by_side_frame(frame_id, bbox, frame, key_frames)
             out_writer.write(side_by_side)
         
         out_writer.release()
@@ -469,7 +478,7 @@ def main():
                         help='采样间隔（1表示每帧都采样）')
     parser.add_argument('--max_frames', type=int, default=180,
                         help='VideoLLAMA3最大帧数限制')
-    parser.add_argument('--key_frames', type=str, default='1172,1335,1621,1816,1843,1871',
+    parser.add_argument('--key_frames', type=str, default='1172,1200,1224,1234,1293,1335,1353,1415,1500,1566,1600,1642,1621,1664,1728,1732,1753,1759,1781,1797,1813,1816,1843,1871',
                         help='关键帧列表，逗号分隔，如: 300,500,700')
     parser.add_argument('--no_video', action='store_true',
                         help='不生成可视化视频')
@@ -487,16 +496,14 @@ def main():
     )
     
     # 1. 导出bbox JSON
-    bbox_data = preprocessor.export_bbox_json(
-        args.start_frame, args.end_frame, args.sample_interval
-    )
+    _ = preprocessor.export_bbox_json(args.start_frame, args.end_frame, args.sample_interval)
     bbox_json_path = preprocessor.json_dir / f"target_{args.target_id}_bbox.json"
     
     # 2. 生成可视化视频
     video_path = None
     if not args.no_video:
         video_path = preprocessor.generate_visualization_video(
-            args.start_frame, args.end_frame,
+            args.start_frame, args.end_frame, key_frames=key_frames,
             output_name=f"target_{args.target_id}_vis.mp4",
             fps=args.fps,
             sample_interval=args.sample_interval

@@ -89,18 +89,13 @@ class VideoLLAMA3Inference:
         print("模型加载完成！")
     
     def run_inference(self, conversation: List[Dict], 
-                      max_new_tokens: int = 512,
-                      do_sample: bool = False,
-                      temperature: float = 0.7) -> str:
+                      max_new_tokens: int = 512) -> str:
         """
         运行推理，生成描述
         
         Args:
             conversation: 对话列表，格式符合 VideoLLAMA3 要求
             max_new_tokens: 最大生成 token 数
-            do_sample: 是否采样
-            temperature: 采样温度
-            
         Returns:
             模型生成的响应文本
         """
@@ -125,8 +120,6 @@ class VideoLLAMA3Inference:
             output_ids = self.model.generate(
                 **inputs,
                 max_new_tokens=max_new_tokens,
-                do_sample=do_sample,
-                temperature=temperature if do_sample else None
             )
         
         # 解码响应
@@ -214,7 +207,6 @@ class VideoLLAMA3Inference:
                     result["json_fields"] = json.loads(json_str)
                 except json.JSONDecodeError:
                     result["json_fields"] = {"parse_error": json_str[:200]}
-        
         return result
     
     def process_target(self, input_json_path: str, output_dir: str,
@@ -271,7 +263,7 @@ class VideoLLAMA3Inference:
                 elif content_item.get("type") == "text":
                     text_preview = content_item.get("text", "")[:200]
                     print(f"问题预览: {text_preview}...")
-
+                    content_item["text"] = "Describe the movement path and behavior change of the boxed target.\n"
         
         # 运行推理
         print("\n正在生成描述...")
@@ -377,7 +369,7 @@ def main():
     # 必需参数
     parser.add_argument('--input', type=str, default="./data/DynUAV/001/48/json/target_48_videollama3_input.json",
                         help='输入文件或目录路径（conversation JSON 文件或包含该文件的目录）')
-    parser.add_argument('--output', type=str, default="./data/DynUAV/001/48/json",
+    parser.add_argument('--output', type=str, default="./data/DynUAV/001/48/json/VideoLLAMA3",
                         help='输出目录')
     parser.add_argument('--model_path', type=str, default="./VideoLLaMA3-7B",
                         help='VideoLLAMA3 模型路径')

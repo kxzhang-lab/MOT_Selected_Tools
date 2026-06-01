@@ -243,7 +243,7 @@ class VideoLLAMA3Preprocessor:
         
         return side_by_side
     
-    def generate_visualization_video(self, start_frame: int, end_frame: int, 
+    def generate_visualization_video(self, start_frame: int, end_frame: int, key_frames_nums: int,
                                       key_frames: Optional[list[int]] = None,
                                       output_name: str = "visualization.mp4",
                                       fps: int = 30, sample_interval: int = 1) -> str:
@@ -253,6 +253,7 @@ class VideoLLAMA3Preprocessor:
         Args:
             start_frame: 起始帧（标注帧号）
             end_frame: 结束帧（标注帧号）
+            key_frames_nums: 用于等间隔采样生成的关键帧数目（用于生成VideoLLAMA3输入的关键帧列表）
             key_frames: 关键帧（标注帧号）
             output_name: 输出视频文件名
             fps: 视频帧率
@@ -288,7 +289,15 @@ class VideoLLAMA3Preprocessor:
         print(f"目标ID: {self.target_id}, 帧范围: {start_frame} ~ {end_frame}")
         print(f"采样间隔: {sample_interval}, 实际输出帧数: ~{(end_frame-start_frame+1)//sample_interval}")
         print(f"出现片段: {segments}")
-        
+
+        # 生成关键帧列表（等间隔采样 + 用户指定）
+        sampled_key_frames = list(np.linspace(start_frame, end_frame, key_frames_nums, dtype=int))
+        if key_frames is not None:
+            key_frames = list(set(key_frames) | set(map(int,sampled_key_frames)))
+            key_frames.sort()
+        else:
+            key_frames = sampled_key_frames
+
         for frame_id in tqdm(range(start_frame, end_frame + 1, sample_interval), desc="生成视频"):
             # 获取图像（注意帧号偏移）
             img_frame_id = frame_id - self.frame_offset
@@ -345,10 +354,10 @@ class VideoLLAMA3Preprocessor:
             json.dump(output_data, f, indent=2)
         
         print(f"bbox标注已保存: {output_path}")
-        return output_data
+        return output_path
     
     def generate_videollama3_input(self, video_path: str, bbox_json_path: str,
-                                     start_frame: int, end_frame: int,
+                                     start_frame: int, end_frame: int, key_frames_nums:int,
                                      key_frames: Optional[List[int]] = None,
                                      max_frames: int = 180) -> Dict:
         """
@@ -359,6 +368,7 @@ class VideoLLAMA3Preprocessor:
             bbox_json_path: bbox标注JSON路径
             start_frame: 起始帧
             end_frame: 结束帧
+            key_frames_nums: 用于等间隔采样生成的关键帧数目（用于生成VideoLLAMA3输入的关键帧列表）
             key_frames: 关键帧列表（如行为变化点）
             max_frames: 最大帧数限制
             
@@ -371,7 +381,15 @@ class VideoLLAMA3Preprocessor:
         
         bbox_dict = bbox_data["annotations"]
         
-        # 如果指定了关键帧，只保留关键帧的bbox
+        # 生成关键帧列表（等间隔采样 + 用户指定）
+        sampled_key_frames = list(np.linspace(start_frame, end_frame, key_frames_nums, dtype=int))
+        if key_frames is not None:
+            key_frames = list(set(key_frames) | set(sampled_key_frames))
+            key_frames.sort()
+        else:
+            key_frames = sampled_key_frames
+
+        # 如果指定了关键帧，只保留关键帧的bbox信息，否则使用全部bbox
         if key_frames:
             filtered_bbox = {k: v for k, v in bbox_dict.items() if int(k) in key_frames}
             bbox_dict = filtered_bbox
@@ -466,24 +484,24 @@ def main():
     parser.add_argument('--output', type=str,
                         default="G:/language-conditional_MOT/DynUAV/001",
                         help='输出目录')
-    parser.add_argument('--target_id', type=int, default=11,
+    parser.add_argument('--target_id', type=int, default=2,
                         help='要提取的目标ID')
     parser.add_argument('--start_frame', type=int, default=1,
                         help='起始帧号（标注帧号）')
-    parser.add_argument('--end_frame', type=int, default=2154,
+    parser.add_argument('--end_frame', type=int, default=379,
                         help='结束帧号（标注帧号）')
     parser.add_argument('--fps', type=int, default=30,
                         help='输出视频帧率')
-    parser.add_argument('--sample_interval', type=int, default=1,
-                        help='采样间隔（1表示每帧都采样）')
+    parser.add_argument('--video_sample_interval', type=int, default=1,
+                        help='制作目标轨迹的视频采样间隔（1表示每帧都采样）')
+    parser.add_argument('--key_frames', type=str, default='37,165,250,345',
+                        help='关键帧列表，逗号分隔，如: 300,500,700')
+    parser.add_argument('--key_frames_nums', type=int, default=20,
+                        help='用于等间隔采样生成的关键帧数目（用于生成VideoLLAMA3输入的关键帧列表）')
     parser.add_argument('--max_frames', type=int, default=180,
                         help='VideoLLAMA3最大帧数限制')
-    key_frames = '1,263,388,454,1255,1295,1348,1514,1549,1602,1710,1786,1810,1834,1905,1949,1984,2039,2081,2109,2154'
-    parser.add_argument('--key_frames', type=str, default=key_frames,
-                        help='关键帧列表，逗号分隔，如: 300,500,700')
     parser.add_argument('--no_video', action='store_true',
                         help='不生成可视化视频')
-    
     args = parser.parse_args()
     
     # 解析关键帧
@@ -497,17 +515,16 @@ def main():
     )
     
     # 1. 导出bbox JSON
-    _ = preprocessor.export_bbox_json(args.start_frame, args.end_frame, args.sample_interval)
-    bbox_json_path = preprocessor.json_dir / f"target_{args.target_id}_bbox.json"
+    bbox_json_path = preprocessor.export_bbox_json(args.start_frame,\
+                         args.end_frame, args.video_sample_interval)
     
     # 2. 生成可视化视频
     video_path = None
     if not args.no_video:
         video_path = preprocessor.generate_visualization_video(
-            args.start_frame, args.end_frame, key_frames=key_frames,
-            output_name=f"target_{args.target_id}_vis.mp4",
-            fps=args.fps,
-            sample_interval=args.sample_interval
+            args.start_frame, args.end_frame, args.key_frames_nums, key_frames=key_frames,
+            output_name=f"target_{args.target_id}_vis.mp4", fps=args.fps,
+            sample_interval=args.video_sample_interval
         )
     
     # 3. 生成VideoLLAMA3输入
@@ -515,6 +532,7 @@ def main():
         preprocessor.generate_videollama3_input(
             video_path, str(bbox_json_path),
             args.start_frame, args.end_frame,
+            args.key_frames_nums,
             key_frames=key_frames,
             max_frames=args.max_frames
         )

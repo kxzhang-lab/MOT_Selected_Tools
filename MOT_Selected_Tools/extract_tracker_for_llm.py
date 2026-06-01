@@ -466,11 +466,11 @@ def main():
     parser.add_argument('--output', type=str,
                         default="G:/language-conditional_MOT/DynUAV/001",
                         help='输出目录')
-    parser.add_argument('--target_id', type=int, default=48,
+    parser.add_argument('--target_id', type=int, default=11,
                         help='要提取的目标ID')
-    parser.add_argument('--start_frame', type=int, default=1172,
+    parser.add_argument('--start_frame', type=int, default=1,
                         help='起始帧号（标注帧号）')
-    parser.add_argument('--end_frame', type=int, default=1871,
+    parser.add_argument('--end_frame', type=int, default=2154,
                         help='结束帧号（标注帧号）')
     parser.add_argument('--fps', type=int, default=30,
                         help='输出视频帧率')
@@ -478,7 +478,8 @@ def main():
                         help='采样间隔（1表示每帧都采样）')
     parser.add_argument('--max_frames', type=int, default=180,
                         help='VideoLLAMA3最大帧数限制')
-    parser.add_argument('--key_frames', type=str, default='1172,1200,1224,1234,1293,1335,1353,1415,1500,1566,1600,1642,1621,1664,1728,1732,1753,1759,1781,1797,1813,1816,1843,1871',
+    key_frames = '1,263,388,454,1255,1295,1348,1514,1549,1602,1710,1786,1810,1834,1905,1949,1984,2039,2081,2109,2154'
+    parser.add_argument('--key_frames', type=str, default=key_frames,
                         help='关键帧列表，逗号分隔，如: 300,500,700')
     parser.add_argument('--no_video', action='store_true',
                         help='不生成可视化视频')

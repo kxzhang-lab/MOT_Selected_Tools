@@ -9,7 +9,7 @@ workspace_dir = Path(__file__).parents[2]  # 获取当前脚本所在目录的�
 if str(workspace_dir) not in sys.path:
     sys.path.insert(0, str(workspace_dir))  # 将上两级目录添加到系统路径，以便导入同目录下的模块
 from scripts.Qwen_VLM_Inference.qwen_trajectory_builder import build_conversation
-from scripts.Qwen_VLM_Inference.response_process import parse_response
+from scripts.Qwen_VLM_Inference.response_process import parse_with_json5
 
 class QwenVLMInference:
     """千问视觉语言模型推理示例
@@ -47,11 +47,11 @@ class QwenVLMInference:
         # 保存结果
         output_dir = Path(trajectory_dir) / "json" / "Qwen3.5-35B-A3B"
         output_dir.mkdir(parents=True, exist_ok=True)
-        # 解析响应
-        parsed_result = parse_response(response)
+        # 保存响应
+        parse_result = parse_with_json5(response)  # 解析响应，提取有用信息
         output_path = output_dir / "target_description.json"
         with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(parsed_result, f, ensure_ascii=False, indent=4)
+            json.dump(parse_result, f, ensure_ascii=False, indent=4)
         print(f"结果已保存到: {output_path}")
         
 def get_trajectory_directory(dataset_entry, video_sequence, target_id):
@@ -80,8 +80,8 @@ def make_parse():
     parser.add_argument("--base_url", type=str, default='https://api-inference.modelscope.cn/v1', help="Base URL for the API")
     parser.add_argument("--model_id", type=str, default='Qwen/Qwen3.5-35B-A3B', help="Model ID to use for inference")
     parser.add_argument("--dataset_entry", type=str, default='./data/DynUAV')  # 数据集入口路径
-    parser.add_argument("--video_sequence", type=str, default='001')  # 视频序列ID
-    parser.add_argument("--target_id", type=str, default='11')  # 目标ID
+    parser.add_argument("--video_sequence", type=str, default='009')  # 视频序列ID
+    parser.add_argument("--target_id", type=str, default='5')  # 目标ID
     return parser.parse_args()
 
 if __name__=='__main__':

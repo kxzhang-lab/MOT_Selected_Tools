@@ -7,7 +7,6 @@
 4. 支持关键帧采样和轨迹断裂处理
 """
 
-import os
 import cv2
 import json
 import argparse
@@ -476,25 +475,25 @@ class VideoLLAMA3Preprocessor:
 def main():
     parser = argparse.ArgumentParser(description='MOT数据预处理（VideoLLAMA3专用版）')
     parser.add_argument('--image_folder', type=str,
-                        default="G:/UAVBenchmark/OUR_DATASET/DynUAVI/split/val/001/img1",
+                        default="G:/UAVBenchmark/OUR_DATASET/DynUAVI/split/test/009/img1",
                         help='原始图像序列文件夹路径')
     parser.add_argument('--annotation', type=str,
-                        default="G:/UAVBenchmark/OUR_DATASET/DynUAVI/split/val/001/gt/gt.txt",
+                        default="G:/UAVBenchmark/OUR_DATASET/DynUAVI/split/test/009/gt/gt.txt",
                         help='原始标注文件路径')
     parser.add_argument('--output', type=str,
-                        default="G:/language-conditional_MOT/DynUAV/001",
+                        default="G:/language-conditional_MOT/DynUAV/009",
                         help='输出目录')
-    parser.add_argument('--target_id', type=int, default=2,
+    parser.add_argument('--target_id', type=int, default=5,
                         help='要提取的目标ID')
     parser.add_argument('--start_frame', type=int, default=1,
                         help='起始帧号（标注帧号）')
-    parser.add_argument('--end_frame', type=int, default=379,
+    parser.add_argument('--end_frame', type=int, default=207,
                         help='结束帧号（标注帧号）')
     parser.add_argument('--fps', type=int, default=30,
                         help='输出视频帧率')
     parser.add_argument('--video_sample_interval', type=int, default=1,
                         help='制作目标轨迹的视频采样间隔（1表示每帧都采样）')
-    parser.add_argument('--key_frames', type=str, default='37,165,250,345',
+    parser.add_argument('--key_frames', type=str, default='113,145,161,203',
                         help='关键帧列表，逗号分隔，如: 300,500,700')
     parser.add_argument('--key_frames_nums', type=int, default=20,
                         help='用于等间隔采样生成的关键帧数目（用于生成VideoLLAMA3输入的关键帧列表）')

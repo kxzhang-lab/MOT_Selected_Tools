@@ -10,7 +10,7 @@ from MOT_Trajectory_Tools.config import FRAME_OFFSET,SAMPLE_INTERVAL,FPS
 
 
 def generate_visualization_key_images(start_frame: int, end_frame: int, add_key_frames: str, target_id:int,
-                                      image_files: Dict[int, Path], annotations: Dict[int, List[Dict]], 
+                                      image_files: Dict[int, Path], annotations: Dict[int, Dict[int, List[float]]], 
                                       output_dir: str):
     """
     生成关键帧的bbox可视化
@@ -50,7 +50,7 @@ def get_video_resolution(image_files: Dict[int, Path], start_frame: int):
 
 
 def get_frame_box(frame_id:int, h:int, w:int, image_files: Dict[int, Path], 
-                  annotations: Dict[int, List[Dict]],target_id:int):
+                  annotations: Dict[int, Dict[int, List[float]]],target_id:int):
     """获取帧图像和指定ID的box
     Params:
         frame_id: 待可视化的帧序号
@@ -71,10 +71,8 @@ def get_frame_box(frame_id:int, h:int, w:int, image_files: Dict[int, Path],
     
     # 获取当前帧的bbox
     bbox = None
-    for ann in annotations[target_id]:
-        if ann['frame'] == frame_id:
-            bbox = [int(v) for v in ann['bbox']]
-            break
+    if frame_id in annotations[target_id]:
+        bbox = [int(v) for v in annotations[target_id][frame_id]]
     return frame, bbox
 
 
@@ -104,7 +102,7 @@ def visualize_bbox(bbox: List[int], original_frame: np.ndarray,
 
 def generate_visualization_video(start_frame: int, end_frame: int, 
                                  image_files: Dict[int, Path], 
-                                 annotations: Dict[int, List[Dict]],
+                                 annotations: Dict[int, Dict[int,List[float]]],
                                  video_dir: str,target_id:int,
                                  output_name: str = "visualization.mp4") -> str:
     """

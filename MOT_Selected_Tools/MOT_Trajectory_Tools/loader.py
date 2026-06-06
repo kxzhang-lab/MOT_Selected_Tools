@@ -31,9 +31,9 @@ def parse_frame_id(filename: str) -> Optional[int]:
     return None
 
 
-def load_annotations(annotation_path) -> Dict[int, List[Dict]]:
+def load_annotations(annotation_path) -> Dict[int, Dict[int, List[float]]]:
     """加载标注文件"""
-    annotations_by_frame = defaultdict(list)
+    annotations_by_frame = defaultdict(dict)
     if not annotation_path.endswith('.txt'):
         raise Exception(f"标注文件{annotation_path}不是.txt文件。")
     frame_index,id_index = detect_column_defs(annotation_path)  # 帧列和id列的判断
@@ -51,11 +51,7 @@ def load_annotations(annotation_path) -> Dict[int, List[Dict]]:
                 y = float(parts[3])
                 w = float(parts[4])
                 h = float(parts[5])
-                
-                annotations_by_frame[target_id].append({
-                    'frame': frame_id,
-                    'bbox': [x, y, w, h]
-                })
+                annotations_by_frame[target_id].update({frame_id: [x, y, w, h]})
     
     print(f"加载标注完成，共 {len(annotations_by_frame)} 帧包含标注")
     return dict(annotations_by_frame)

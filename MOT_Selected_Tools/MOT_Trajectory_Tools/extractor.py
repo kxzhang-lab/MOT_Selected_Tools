@@ -4,7 +4,7 @@ from typing import Dict, List, Tuple
 from MOT_Trajectory_Tools.config import KEY_FRAME_NUMS
 
 def get_target_timeline(start_frame: int, end_frame: int, target_id:int,
-                         annotations: Dict[int, List[Dict]]) -> List[Tuple[int, int]]:
+                         annotations: Dict[int, Dict[int, List[float]]]) -> List[Tuple[int, int]]:
     """获取目标在指定时间范围内出现的连续片段
     Params:
         start_frame: 起始帧（标注帧号）
@@ -16,10 +16,9 @@ def get_target_timeline(start_frame: int, end_frame: int, target_id:int,
     current_segment = None
     
     tar_ann = annotations[target_id]
-    tar_frames = [ann['frame'] for ann in tar_ann]
     for frame in range(start_frame, end_frame + 1):
         has_target = False
-        if frame in tar_frames:
+        if frame in tar_ann:
             has_target = True
         
         if has_target:
@@ -38,7 +37,7 @@ def get_target_timeline(start_frame: int, end_frame: int, target_id:int,
     return segments
 
 
-def extract_bbox_annotations(start_frame: int, end_frame: int, annotations: Dict[int, List[Dict]],
+def extract_bbox_annotations(start_frame: int, end_frame: int, annotations: Dict[int, Dict[int, List[float]]],
                              target_id: int, sample_interval: int = 1) -> Dict[int, List[int]]:
     """
     提取目标在指定范围内的bbox标注（原始坐标）
@@ -55,8 +54,7 @@ def extract_bbox_annotations(start_frame: int, end_frame: int, annotations: Dict
     """
     bbox_dict = {}
     if target_id in annotations:
-        for ann in annotations[target_id]:
-            frame, bbox = ann['frame'], ann['bbox']
+        for frame, bbox in annotations[target_id].items():
             is_save = start_frame <= frame <= end_frame and frame % sample_interval == 0
             if is_save: bbox_dict[frame] = [int(v) for v in bbox]
     return bbox_dict

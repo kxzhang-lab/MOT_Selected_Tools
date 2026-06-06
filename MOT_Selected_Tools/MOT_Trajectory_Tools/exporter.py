@@ -5,7 +5,7 @@ from typing import Dict, Any, List
 from MOT_Trajectory_Tools.extractor import *
 
 def export_bbox_json(start_frame: int, end_frame: int, 
-                     annotations: Dict[int, List[Dict]],
+                     annotations: Dict[int, Dict[int, List[float]]],
                      target_id: int, json_dir: str,
                      sample_interval: int = 1) -> Dict[str, Any]:
     """

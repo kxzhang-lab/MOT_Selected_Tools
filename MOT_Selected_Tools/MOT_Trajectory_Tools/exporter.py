@@ -14,6 +14,7 @@ def export_bbox_json(start_frame: int, end_frame: int,
     Args:
         start_frame: 起始帧
         end_frame: 结束帧
+        annotations: 以轨迹ID为键的字典
         target_id: 轨迹ID序号
         json_dir: .json文件的保存文件夹路径
         sample_interval: 采样间隔

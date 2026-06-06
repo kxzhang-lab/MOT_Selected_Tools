@@ -15,13 +15,12 @@ def get_target_timeline(start_frame: int, end_frame: int, target_id:int,
     segments = []
     current_segment = None
     
+    tar_ann = annotations[target_id]
+    tar_frames = [ann['frame'] for ann in tar_ann]
     for frame in range(start_frame, end_frame + 1):
         has_target = False
-        if frame in annotations:
-            for ann in annotations[frame]:
-                if ann['id'] == target_id:
-                    has_target = True
-                    break
+        if frame in tar_frames:
+            has_target = True
         
         if has_target:
             if current_segment is None:
@@ -47,7 +46,7 @@ def extract_bbox_annotations(start_frame: int, end_frame: int, annotations: Dict
     Args:
         start_frame: 起始帧（标注帧号）
         end_frame: 结束帧（标注帧号）
-        annotations: 以帧号为key的标注字典
+        annotations: 以轨迹ID为key的标注字典
         target_id: 目标轨迹ID
         sample_interval: 采样间隔，1表示每帧都提取
         
@@ -55,17 +54,11 @@ def extract_bbox_annotations(start_frame: int, end_frame: int, annotations: Dict
         {frame_id: [x, y, w, h]}
     """
     bbox_dict = {}
-    
-    for frame in range(start_frame, end_frame + 1):
-        if frame % sample_interval != 0:
-            continue
-            
-        if frame in annotations:
-            for ann in annotations[frame]:
-                if ann['id'] == target_id:
-                    bbox_dict[frame] = [int(v) for v in ann['bbox']]
-                    break
-    
+    if target_id in annotations:
+        for ann in annotations[target_id]:
+            frame, bbox = ann['frame'], ann['bbox']
+            is_save = start_frame <= frame <= end_frame and frame % sample_interval == 0
+            if is_save: bbox_dict[frame] = [int(v) for v in bbox]
     return bbox_dict
 
 

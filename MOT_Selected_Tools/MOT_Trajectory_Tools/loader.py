@@ -52,8 +52,8 @@ def load_annotations(annotation_path) -> Dict[int, List[Dict]]:
                 w = float(parts[4])
                 h = float(parts[5])
                 
-                annotations_by_frame[frame_id].append({
-                    'id': target_id,
+                annotations_by_frame[target_id].append({
+                    'frame': frame_id,
                     'bbox': [x, y, w, h]
                 })
     

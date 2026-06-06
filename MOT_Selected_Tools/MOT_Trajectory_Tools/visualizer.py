@@ -21,7 +21,7 @@ def generate_visualization_key_images(start_frame: int, end_frame: int, add_key_
         add_key_frames: 人为指定的关键帧
         target_id: 指定轨迹的ID
         image_files: 所有图像序列
-        annotations: 以帧为键组织的标注字典
+        annotations: 以轨迹ID为键组织的标注字典
         output_dir: 输出路径
     """
     key_frames = generate_key_frames(add_key_frames,start_frame,end_frame)
@@ -57,7 +57,7 @@ def get_frame_box(frame_id:int, h:int, w:int, image_files: Dict[int, Path],
         h: 视频的高度
         w: 视频的宽度
         image_files: 所有图像序列
-        annotations: 以帧为键组织的标注字典
+        annotations: 以轨迹ID号为键组织的标注字典
         target_id: 指定轨迹的ID号
     """
     img_frame_id = frame_id - FRAME_OFFSET
@@ -71,11 +71,10 @@ def get_frame_box(frame_id:int, h:int, w:int, image_files: Dict[int, Path],
     
     # 获取当前帧的bbox
     bbox = None
-    if frame_id in annotations:
-        for ann in annotations[frame_id]:
-            if ann['id'] == target_id:
-                bbox = [int(v) for v in ann['bbox']]
-                break
+    for ann in annotations[target_id]:
+        if ann['frame'] == frame_id:
+            bbox = [int(v) for v in ann['bbox']]
+            break
     return frame, bbox
 
 

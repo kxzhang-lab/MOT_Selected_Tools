@@ -9,8 +9,9 @@ from MOT_Trajectory_Tools.extractor import *
 from MOT_Trajectory_Tools.config import FRAME_OFFSET,SAMPLE_INTERVAL,FPS
 
 
-def generate_visualization_key_images(start_frame: int, end_frame: int, add_key_frames: str, target_id:int,
-                                      image_files: Dict[int, Path], annotations: Dict[int, Dict[int, List[float]]], 
+def generate_visualization_key_images(start_frame: int, end_frame: int, add_key_frames: str, 
+                                      target_id:int, image_files: Dict[int, Path], 
+                                      annotations: Dict[int, Dict[int, List[float]]], 
                                       output_dir: str):
     """
     生成关键帧的bbox可视化

@@ -67,10 +67,10 @@ def generate_key_frames(add_key_frames:str,start_frame:int,end_frame:int):
         start_frame: 起始帧
         end_frame: 结束帧
     """
-    added_key_frames = [int(x.strip()) for x in add_key_frames.split(',')]  # 人为新增关键帧
     # 生成关键帧列表（等间隔采样 + 用户指定）
     sampled_key_frames = list(np.linspace(start_frame, end_frame, KEY_FRAME_NUMS, dtype=int))
-    if added_key_frames is not None:
+    if add_key_frames:
+        added_key_frames = [int(x.strip()) for x in add_key_frames.split(',')]  # 人为新增关键帧
         key_frames = list(set(added_key_frames) | set(map(int,sampled_key_frames)))  # 将新增关键帧和采样关键帧合并
         key_frames.sort()
     else:

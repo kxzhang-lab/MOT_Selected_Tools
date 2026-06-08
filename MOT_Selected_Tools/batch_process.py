@@ -10,7 +10,7 @@ def make_parse():
     parser.add_argument('--video_name',type=str, default='009', help='视频名称')
 
     # 新加测试参数：最大处理轨迹条数
-    parser.add_argument('--max_num', type=int, default=10, help='最大处理轨迹条数')
+    parser.add_argument('--max_num', type=int, default=None, help='最大处理轨迹条数')
 
     parser.add_argument('--output_dir', type=str, default="G:/language-conditional_MOT", help='输出总目录')
     parser.add_argument('--no_video', action='store_true', help='不生成可视化视频')

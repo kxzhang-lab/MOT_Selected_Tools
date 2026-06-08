@@ -3,6 +3,7 @@ import argparse
 import os
 from pathlib import Path
 import json
+import ast
 
 import sys
 workspace_dir = Path(__file__).parents[2]  # 获取当前脚本所在目录的上两级目录
@@ -52,7 +53,7 @@ class QwenVLMInference:
         output_path = output_dir / "target_description.json"
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(parse_result, f, ensure_ascii=False, indent=4)
-        print(f"结果已保存到: {output_path}")
+        print(f"轨迹——{os.path.basename(trajectory_dir)}——的结果已保存到: {output_path}")
         
 def get_trajectory_directory(dataset_entry, video_sequence, target_id):
     """构建目标轨迹图像目录路径
@@ -68,20 +69,46 @@ def get_trajectory_directory(dataset_entry, video_sequence, target_id):
         raise FileNotFoundError(f"Trajectory directory not found: {trajectory_dir}")
     return trajectory_dir
 
+def single_trajectory_process(inference:QwenVLMInference, dataset_entry:str, 
+                              video_sequence:str, target_id:str):
+    """单条轨迹处理函数
+    Params:
+        inference (QwenVLMInference): Qwen大模型的前向推理类
+        dataset_entry (str): 数据集入口路径
+        video_sequence (str): 视频序号
+        target_id (str): 轨迹ID号
+    """
+    trajectory_dir = get_trajectory_directory(dataset_entry, video_sequence, target_id)  # 获取目标轨迹图像目录路径  
+    inference.process_trajectory(trajectory_dir=trajectory_dir)  # 执行轨迹前向推理
+
+def batch_trajectory_process(inference:QwenVLMInference, dataset_entry:str, video_sequence:str):
+    """轨迹批处理流程
+    Params:
+        inference (QwenVLMInference): Qwen大模型的前向推理类
+        dataset_entry (str): 数据集入口路径
+        video_sequence (str): 视频序号
+    """
+    all_trajectories = [target_id for target_id in os.listdir(f"{dataset_entry}/{video_sequence}") 
+                        if (target_id.isdigit() and os.path.isdir(f"{dataset_entry}/{video_sequence}/{target_id}"))]
+    all_trajectories.sort(key=lambda x:ast.literal_eval(x))
+    for target_id in all_trajectories: single_trajectory_process(inference, dataset_entry, video_sequence, target_id)
+    
 def main():
     args = make_parse()  # 读取输入参数
     inference = QwenVLMInference(api_key=args.api_key, base_url=args.base_url, model_id=args.model_id)  # 初始化QwenVLMInference实例
-    trajectory_dir = get_trajectory_directory(args.dataset_entry, args.video_sequence, args.target_id)  # 获取目标轨迹图像目录路径  
-    inference.process_trajectory(trajectory_dir=trajectory_dir)  # 执行轨迹前向推理
+    if args.target_id and len(args.target_id > 0):  # 指定了轨迹ID那就只描述这一个轨迹
+        single_trajectory_process(inference, args.dataset_entry, args.video_sequence, args.target_id)
+    else:  # 要是没有指定轨迹ID那就描述该视频下的所有轨迹
+        batch_trajectory_process(inference, args.dataset_entry, args.video_sequence)
 
 def make_parse():
     parser = argparse.ArgumentParser(description="Run Qwen3.5-35B-A3B on target trajectory")
     parser.add_argument("--api_key", type=str, default='ms-13172eb6-370d-4b42-996d-c8d2b830b661', help="API key for authentication")
     parser.add_argument("--base_url", type=str, default='https://api-inference.modelscope.cn/v1', help="Base URL for the API")
     parser.add_argument("--model_id", type=str, default='Qwen/Qwen3.5-35B-A3B', help="Model ID to use for inference")
-    parser.add_argument("--dataset_entry", type=str, default='./data/DynUAV')  # 数据集入口路径
-    parser.add_argument("--video_sequence", type=str, default='009')  # 视频序列ID
-    parser.add_argument("--target_id", type=str, default='5')  # 目标ID
+    parser.add_argument("--dataset_entry", type=str, default='./data/DynUAVI')  # 数据集入口路径
+    parser.add_argument("--video_sequence", type=str, default='001')  # 视频序列ID
+    parser.add_argument("--target_id", type=str, default='')  # 目标ID
     return parser.parse_args()
 
 if __name__=='__main__':

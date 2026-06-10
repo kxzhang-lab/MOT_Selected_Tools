@@ -34,7 +34,7 @@ class QwenVLMInference:
         )
         return response.choices[0].message.content
     
-    def process_trajectory(self, trajectory_dir):
+    def process_trajectory(self, trajectory_dir, sample_num):
         """处理目标轨迹图像并生成描述
         Args:
             trajectory_dir (str): 目标轨迹图像所在目录
@@ -42,7 +42,7 @@ class QwenVLMInference:
             str: 模型生成的描述文本
         """
         # 构建对话输入
-        conversation = build_conversation(trajectory_dir)
+        conversation = build_conversation(trajectory_dir, sample_num)
         # 运行推理
         response = self.run_inference([conversation])
         # 保存结果
@@ -70,7 +70,7 @@ def get_trajectory_directory(dataset_entry, video_sequence, target_id):
     return trajectory_dir
 
 def single_trajectory_process(inference:QwenVLMInference, dataset_entry:str, 
-                              video_sequence:str, target_id:str):
+                              video_sequence:str, target_id:str, sample_num:int):
     """单条轨迹处理函数
     Params:
         inference (QwenVLMInference): Qwen大模型的前向推理类
@@ -79,9 +79,9 @@ def single_trajectory_process(inference:QwenVLMInference, dataset_entry:str,
         target_id (str): 轨迹ID号
     """
     trajectory_dir = get_trajectory_directory(dataset_entry, video_sequence, target_id)  # 获取目标轨迹图像目录路径  
-    inference.process_trajectory(trajectory_dir=trajectory_dir)  # 执行轨迹前向推理
+    inference.process_trajectory(trajectory_dir=trajectory_dir, sample_num=sample_num)  # 执行轨迹前向推理
 
-def batch_trajectory_process(inference:QwenVLMInference, dataset_entry:str, video_sequence:str):
+def batch_trajectory_process(inference:QwenVLMInference, dataset_entry:str, video_sequence:str, sample_num:int):
     """轨迹批处理流程
     Params:
         inference (QwenVLMInference): Qwen大模型的前向推理类
@@ -91,23 +91,25 @@ def batch_trajectory_process(inference:QwenVLMInference, dataset_entry:str, vide
     all_trajectories = [target_id for target_id in os.listdir(f"{dataset_entry}/{video_sequence}") 
                         if (target_id.isdigit() and os.path.isdir(f"{dataset_entry}/{video_sequence}/{target_id}"))]
     all_trajectories.sort(key=lambda x:ast.literal_eval(x))
-    for target_id in all_trajectories: single_trajectory_process(inference, dataset_entry, video_sequence, target_id)
+    for target_id in all_trajectories: single_trajectory_process(inference, dataset_entry, video_sequence, target_id, sample_num)
     
 def main():
-    args = make_parse()  # 读取输入参数
-    inference = QwenVLMInference(api_key=args.api_key, base_url=args.base_url, model_id=args.model_id)  # 初始化QwenVLMInference实例
-    if args.target_id and len(args.target_id > 0):  # 指定了轨迹ID那就只描述这一个轨迹
-        single_trajectory_process(inference, args.dataset_entry, args.video_sequence, args.target_id)
+    args = make_parse()  # 读取输入参数 
+    inference = QwenVLMInference(api_key=args.api_key, base_url=args.base_url, 
+                                 model_id=args.model_id)  # 初始化QwenVLMInference实例
+    if args.target_id and len(args.target_id) > 0:  # 指定了轨迹ID那就只描述这一个轨迹
+        single_trajectory_process(inference, args.dataset_entry, args.video_sequence, args.target_id, args.sample_num)
     else:  # 要是没有指定轨迹ID那就描述该视频下的所有轨迹
-        batch_trajectory_process(inference, args.dataset_entry, args.video_sequence)
+        batch_trajectory_process(inference, args.dataset_entry, args.video_sequence, args.sample_num)
 
 def make_parse():
     parser = argparse.ArgumentParser(description="Run Qwen3.5-35B-A3B on target trajectory")
     parser.add_argument("--api_key", type=str, default='ms-13172eb6-370d-4b42-996d-c8d2b830b661', help="API key for authentication")
     parser.add_argument("--base_url", type=str, default='https://api-inference.modelscope.cn/v1', help="Base URL for the API")
     parser.add_argument("--model_id", type=str, default='Qwen/Qwen3.5-35B-A3B', help="Model ID to use for inference")
+    parser.add_argument("--sample_num", type=int, default=19)  # 构建data_url时的采样间隔
     parser.add_argument("--dataset_entry", type=str, default='./data/DynUAVI')  # 数据集入口路径
-    parser.add_argument("--video_sequence", type=str, default='001')  # 视频序列ID
+    parser.add_argument("--video_sequence", type=str, default='009')  # 视频序列ID
     parser.add_argument("--target_id", type=str, default='')  # 目标ID
     return parser.parse_args()
 

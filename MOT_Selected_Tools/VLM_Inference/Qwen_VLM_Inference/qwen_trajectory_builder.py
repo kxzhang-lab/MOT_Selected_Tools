@@ -137,10 +137,11 @@ def build_trajectory_prompt():
     """
     return prompt
 
-def build_conversation(trajectory_dir):
+def build_conversation(trajectory_dir, sample_num):
     """构建包含图像输入的对话列表
     Args:
         trajectory_dir (str): 目标轨迹图像所在目录
+        sample_num (int): 被用来制作image_url的image数目
     Returns:
         list: 包含文本和图像输入的对话列表
     """
@@ -150,7 +151,7 @@ def build_conversation(trajectory_dir):
     image_files = [f for f in all_image_files if pattern.search(f)]
     if not image_files:
         raise FileNotFoundError(f"No images found in {trajectory_dir}/images/")
-    image_content = build_image_content(image_files, sample_interval=1)  # 采样所有图像
+    image_content = build_image_content(image_files, sample_num)  # 采样所有图像
     prompt = build_trajectory_prompt()
     conversation = {
         "role": "user",

@@ -49,11 +49,12 @@ class QwenVLMInference:
         output_dir = Path(trajectory_dir) / "json" / "Qwen3.5-35B-A3B"
         output_dir.mkdir(parents=True, exist_ok=True)
         # 保存响应
-        parse_result = parse_with_json5(response)  # 解析响应，提取有用信息
-        output_path = output_dir / "target_description.json"
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(parse_result, f, ensure_ascii=False, indent=4)
-        print(f"轨迹——{os.path.basename(trajectory_dir)}——的结果已保存到: {output_path}")
+        parse_result = parse_with_json5(response,Path(trajectory_dir).parts[-1])  # 解析响应，提取有用信息
+        if parse_result["json_content"]:
+            output_path = output_dir / "target_description.json"
+            with open(output_path, "w", encoding="utf-8") as f:
+                json.dump(parse_result, f, ensure_ascii=False, indent=4)
+            print(f"轨迹——{os.path.basename(trajectory_dir)}——的结果已保存到: {output_path}")
         
 def get_trajectory_directory(dataset_entry, video_sequence, target_id):
     """构建目标轨迹图像目录路径

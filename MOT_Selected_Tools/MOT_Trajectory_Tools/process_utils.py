@@ -64,7 +64,8 @@ def target_conduct(input_param,target_param,save_flag,annotations,image_files):
     
     # 3. 生成关键帧可视化图像序列
     if not no_save_frames:
-        generate_visualization_key_images(start_frame, end_frame, add_key_frames, target_id, image_files, annotations, output_dict['images'])
+        generate_visualization_key_images(start_frame, end_frame, add_key_frames, 
+                                          target_id, image_files, annotations, output_dict['images'])
         
     # 4. 生成轨迹视频
     if not no_video:

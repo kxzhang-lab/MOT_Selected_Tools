@@ -45,7 +45,7 @@ def get_image_anno_path(dataset_entry, dataset_name,
     return str(image_folder), str(annotation_path)
 
 
-def make_output_folders(all_output_dir, dataset_name, video_name, target_id,
+def make_output_folders(all_output_dir, dataset_name, video_name, target_id, 
                         no_video, no_save_frames, no_export_json):
     """
     创建该视频的相关输出路径
@@ -53,7 +53,7 @@ def make_output_folders(all_output_dir, dataset_name, video_name, target_id,
         all_output_dir: 总输出路径
         dataset_name: 数据集名称
         video_name: 视频名称
-        target_id: 待可视化的目标id
+        target_id: 轨迹ID号
         no_video: 输出bbox可视化拼接视频的标志位
         no_save_frames: 输出bbox在关键帧上可视化的标志位
         no_export_json: 不导出关键帧bbox坐标的标志位
@@ -61,10 +61,10 @@ def make_output_folders(all_output_dir, dataset_name, video_name, target_id,
         output_dict: 输出路径字典。包含：关键帧、视频和坐标.json文件。
     """
     output_dict = {"json":"","images":"","video":""}  # 构造输出路径字典
-    output_id = os.path.join(all_output_dir,dataset_name,video_name,str(target_id)) # 该目标的总输出路径
-    if not no_video: output_dict["video"] = os.path.join(output_id, "video")  # 左bbox原图可视化右局部放大图拼接路径
-    if not no_save_frames: output_dict["images"] = os.path.join(output_id, "images")  # 关键帧bbox可视化图像序列存放路径
-    if not no_export_json: output_dict["json"] = os.path.join(output_id, "json")  # 关键帧标注存放.json文件的存储路径
+    output_seq = os.path.join(all_output_dir,dataset_name,video_name) # 该目标的总输出路径
+    if not no_video: output_dict["video"] = os.path.join(output_seq, "video")  # 左bbox原图可视化右局部放大图拼接路径
+    if not no_save_frames: output_dict["images"] = os.path.join(output_seq, "images", str(target_id))  # 关键帧bbox可视化图像序列存放路径
+    if not no_export_json: output_dict["json"] = os.path.join(output_seq, "json")  # 关键帧标注存放.json文件的存储路径
     for path in output_dict.values():  # 路径构造
         if path: os.makedirs(path,exist_ok=True)
     return output_dict

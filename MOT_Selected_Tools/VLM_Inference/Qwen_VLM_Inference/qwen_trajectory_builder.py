@@ -15,7 +15,7 @@ def build_trajectory_prompt():
     2. Do not add new fields.\n
     3. Use \"uncertain\" if not visible.\n
     4. Avoid subjective guesses.\n
-    5. Prefer scene-grounded landmarks over image coordinates.\n
+    5. Prefer stable scene landmarks (eg:roads, buildings, greenbelts, lakes, intersections and so on) over image-relative directions (left/right/top/bottom).\n
     """
     output_demands = """
     Output only valid JSON:\n
@@ -72,7 +72,7 @@ def build_trajectory_prompt():
     """
     color_list = """
     Fixed color list:\n
-    black, white, red,blue,yellow,green,grey,brown,uncertain.\n
+    black, white, red,pink,blue,yellow,orange,green,grey,brown,uncertain.\n
     """
     behavior_list = """
     Fixed behavior list:\n
@@ -145,12 +145,12 @@ def build_conversation(trajectory_dir, sample_num):
     Returns:
         list: 包含文本和图像输入的对话列表
     """
-    all_image_files = sorted(glob.glob(f"{trajectory_dir}/images/frame_*.jpg"))
+    all_image_files = sorted(glob.glob(f"{trajectory_dir}/frame_*.jpg"))
     # 只保留 frame_ 后面紧跟6位数字的文件
     pattern = re.compile(r'frame_\d{6}\.jpg$')
     image_files = [f for f in all_image_files if pattern.search(f)]
     if not image_files:
-        raise FileNotFoundError(f"No images found in {trajectory_dir}/images/")
+        raise FileNotFoundError(f"No images found in {trajectory_dir}")
     image_content = build_image_content(image_files, sample_num)  # 采样所有图像
     prompt = build_trajectory_prompt()
     conversation = {
